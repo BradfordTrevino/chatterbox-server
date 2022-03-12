@@ -12,6 +12,9 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
+// make a database in global scope
+var _storage = [];
+
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   //
@@ -27,17 +30,21 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+
+  //console.log(request);
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
   // The outgoing status.
-  var statusCode = 200;
+  // statusCode should be more dynamic
   if (request.method === 'GET') {
-    statusCode = 200;
+    var statusCode = 200;
   } else if (request.method === 'POST') {
-    statusCode = 201;
+    var statusCode = 201;
   }
 
+
   // See the note below about CORS headers.
+
   // eslint-disable-next-line no-use-before-define
   var headers = defaultCorsHeaders;
 
@@ -45,7 +52,7 @@ var requestHandler = function(request, response) {
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'application/JSON';
+  headers['Content-Type'] = 'application/json';
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
@@ -58,7 +65,27 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end('Hello, World!');
+
+
+  // vvv response.end would go in each response method vvv
+  if (request.method === 'GET') {
+    var statusCode = 200;
+    // possibly do GET request
+    return response.end(JSON.stringify(_storage));
+
+  } else if (request.method === 'POST') {
+    // possibly do POST request
+
+    request.on ('data', (chunk) => {
+      console.log(chunk);
+      _storage.push(chunk);
+
+    });
+
+    response.statusCode = 201;
+    return response.end();
+  }
+
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -75,6 +102,8 @@ var defaultCorsHeaders = {
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'access-control-allow-headers': 'content-type, accept, authorization',
   'access-control-max-age': 10 // Seconds.
+
 };
+
 
 exports.handleRequest = requestHandler;
