@@ -31,15 +31,21 @@ var requestHandler = function(request, response) {
 
   // The outgoing status.
   var statusCode = 200;
+  if (request.method === 'GET') {
+    statusCode = 200;
+  } else if (request.method === 'POST') {
+    statusCode = 201;
+  }
 
   // See the note below about CORS headers.
+  // eslint-disable-next-line no-use-before-define
   var headers = defaultCorsHeaders;
 
   // Tell the client we are sending them plain text.
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'text/plain';
+  headers['Content-Type'] = 'application/JSON';
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
@@ -70,3 +76,5 @@ var defaultCorsHeaders = {
   'access-control-allow-headers': 'content-type, accept, authorization',
   'access-control-max-age': 10 // Seconds.
 };
+
+exports.handleRequest = requestHandler;
