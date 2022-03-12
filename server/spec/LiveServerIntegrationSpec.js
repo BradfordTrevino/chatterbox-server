@@ -65,5 +65,16 @@ describe('server', function() {
     });
   });
 
+  // it('should 400 when POST request sends an array', function(done) {
+  //   var requestParams = {method: 'POST',
+  //     uri: 'http://127.0.0.1:3000/classes/messages',
+  //     json: ['Jono', 'Do my bidding!']
+  //   };
+
+  //   request(requestParams, function(error, response, body) {
+  //     expect(response.statusCode).to.equal(400);
+  //     done();
+  //   });
+  // });
 
 });

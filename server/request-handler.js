@@ -12,6 +12,13 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
+var defaultCorsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type, accept, authorization',
+  'access-control-max-age': 10 // Seconds.
+};
+
 // make a database in global scope
 var _storage = [];
 
@@ -30,33 +37,68 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+  var headers = defaultCorsHeaders;
+  const url = request.url;
 
   //console.log(request);
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
-
+  var statusCode;
   // The outgoing status.
   // statusCode should be more dynamic
-  if (request.method === 'GET') {
-    var statusCode = 200;
-  } else if (request.method === 'POST') {
-    var statusCode = 201;
+  if (request.method === 'OPTIONS') {
+
+    statusCode = 200;
+    response.writeHead(statusCode, headers);
+    response.end(JSON.stringify(['Hello World!']));
+
+  } else if (request.method === 'GET' && url === '/classes/messages') {
+
+    statusCode = 200;
+    headers['Content-Type'] = 'application/json';
+    response.writeHead(statusCode, headers);
+    response.end(JSON.stringify(_storage));
+
+  } else if (request.method === 'POST' && url === '/classes/messages') {
+
+    statusCode = 201;
+    headers['Content-Type'] = 'application/json';
+    var body = '';
+    request.on ('data', (chunk) => {
+      body += chunk;
+      if (!Array.isArray(JSON.parse(body))) {
+        _storage.push(JSON.parse(body));
+      } else {
+        statusCode = 400;
+        response.writeHead(statusCode, headers);
+        response.end();
+      }
+    });
+    response.writeHead(statusCode, headers);
+    response.end();
+
+  } else {
+
+    statusCode = 404;
+    response.writeHead(statusCode, headers);
+    response.end();
   }
+
 
 
   // See the note below about CORS headers.
 
-  // eslint-disable-next-line no-use-before-define
-  var headers = defaultCorsHeaders;
 
   // Tell the client we are sending them plain text.
   //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'application/json';
+
+  // headers['Content-Type'] = 'application/json';
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
+
+  // response.writeHead(statusCode, headers);
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
@@ -65,26 +107,6 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-
-
-  // vvv response.end would go in each response method vvv
-  if (request.method === 'GET') {
-    var statusCode = 200;
-    // possibly do GET request
-    return response.end(JSON.stringify(_storage));
-
-  } else if (request.method === 'POST') {
-    // possibly do POST request
-
-    request.on ('data', (chunk) => {
-      console.log(chunk);
-      _storage.push(chunk);
-
-    });
-
-    response.statusCode = 201;
-    return response.end();
-  }
 
 };
 
@@ -97,13 +119,7 @@ var requestHandler = function(request, response) {
 //
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
-var defaultCorsHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'content-type, accept, authorization',
-  'access-control-max-age': 10 // Seconds.
-
-};
 
 
-exports.handleRequest = requestHandler;
+
+exports.requestHandler = requestHandler;
